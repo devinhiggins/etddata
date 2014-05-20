@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 from pprint import pprint
 from msu_programs import College_Sort
 from program_clean import Program_Clean
+from new_datastream import Get_Pid, Repo_Connect
 
 # The list of dictionaries (data_list) should have one dictionary for each program.
 # This function checks to see whether a new program dictionary exists or not, then, if it does,
@@ -82,10 +83,25 @@ def MARC_Geo(path, item):
 def MARC_Data(path, item):
     new_path = path+item.replace("DATA.xml","MARCXML.xml")
     subjects = []
+    path_subject = "/marc:record/marc:datafield[@tag='650']/marc:subfield[@code='a']"
     if os.path.exists(new_path):
-        path_subject = "/marc:record/marc:datafield[@tag='650']/marc:subfield[@code='a']"
         tree = etree.parse(path+item.replace("DATA.xml","MARCXML.xml"))
-        r_subjects = tree.xpath(path_subject, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
+        
+    else:
+    	# Connect to repository to get MARC XML.
+        repo = Repo_Connect("Development")
+        pid = Get_Pid(item, repo)
+        if pid is not None:
+        	digital_object = repo.get_object(pid)
+        	marc_ds = digital_object.getDatastreamObject("MARCXML")
+        	tree = etree.fromstring(marc_ds.content.serialize())
+        
+        	
+    if pid is not None:	
+    	r_subjects = tree.xpath(path_subject, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
+    else:
+    	r_subjects = []
+    if r_subjects != []:
         for i,j in enumerate(r_subjects):
             if r_subjects[i] <> None:
                 subjects.append(str(r_subjects[i].text).strip(".").rstrip())
@@ -99,10 +115,11 @@ def Graph_Builder(path, key, json=False):
     g = nx.Graph()
     dataset = XML_Data(path)
     
-    pprint(dataset)
-    
     for d in dataset:
-        g.add_node(d[key], strength=len(d["Authors"]))
+    	if "College" in d:
+        	g.add_node(d[key], strength=len(d["Authors"]), college=d["College"])
+        else:
+        	g.add_node(d[key], strength=len(d["Authors"]), college="Not specified")
     combos = itertools.combinations(dataset,2)
     i = 0
     for combo in combos:
@@ -160,24 +177,24 @@ def XML_Data(path):
         # Call Get_Terms function to pull keywords and topics from XML.               
         xml_dict["Topics"] = Get_Terms(tree, path_category)
         keywords = Get_Terms(tree, path_keywords)
+        
         if keywords <> [None]:
             xml_dict["Keywords"] = keywords
-
         # Get subjects from MARC.xml file
         xml_dict["Subjects"] = MARC_Data(path, item)
         
         # Get geographical LCSH from MARC.xml file
-        xml_dict["GeoHeadings"] = MARC_Geo(path, item)
+        # xml_dict["GeoHeadings"] = MARC_Geo(path, item)
         
-        if program in college_data:
-        	if college_data[program][0] is not None:
-        		xml_dict["Department"] = [college_data[program][1]]
-        	if college_data[program][1] is not None:
-        		xml_dict["College"] = [college_data[program][0]]
+        if clean_program in college_data:
+        	if college_data[clean_program][0] is not None:
+        		xml_dict["Department"] = [college_data[clean_program][1]]
+        	if college_data[clean_program][1] is not None:
+        		xml_dict["College"] = [college_data[clean_program][0]]
      
             
         dict_update(xml_dict, clean_program, data_list)
-
+	print data_list
     return data_list
 
 def Write_JSON(g, path):
@@ -198,5 +215,3 @@ def Write_JSON(g, path):
 #        program_list.append(x["Program"])        
 #    pprint(sorted(set(program_list)))
 #    pprint(data_list)
-
-

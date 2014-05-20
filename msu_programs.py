@@ -41,7 +41,7 @@ def College_Sort():
                     college_data[program] = (current_college[3:].rstrip(), current_dept[5:].rstrip())
                 else:
                     college_data[program] = (current_college[3:].rstrip(), None)
-	pprint(college_data)
+
     return college_data            
 
 def Make_Graph():

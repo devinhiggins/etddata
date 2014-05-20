@@ -4,8 +4,13 @@ from eulxml.xmlmap import XmlObject
 from eulxml import xmlmap
 from lxml import etree
 import os, ConfigParser
-from xmldata import Get_Terms, Program_Clean
+import xmldata
 from eulfedora import api
+
+def Repo_Connect(server):
+    username,password,root = Get_Configs(server)
+    repo = Repository(root=root,username=username, password=password)
+    return repo
 
 
 def Update_Custom(server, filepath, purge=False):
