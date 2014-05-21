@@ -4,7 +4,7 @@ from datetime import datetime, time, date
 from lxml import etree
 from pprint import pprint
 import json
-from . import newds
+from . import prereq
 
 class DocumentDates:
     def __init__(self, f):
@@ -42,16 +42,28 @@ class DocumentDates:
 
 
 class ETDData:
-    def __init__(self, directory):
+    def __init__(self, directory, xml=None):
         self.directory = directory
+        if xml:
+            self.xml = xml
 
-    def SearchAuth(self, xml):
+    def SearchAuth(self):
         path_search = "/DISS_submission/@third_party_search"
-        tree = etree.parse(self.directory+xml)
+        tree = etree.parse(self.directory+self.xml)
         r_search = tree.xpath(path_search)
         return r_search[0]
 
-    def FindRestricted(self, date, json=False):
+    def SearchRestrictions(self):
+        """
+        Looks up publishing restriction codes for each XML document. Return dictionary
+        of attributes and their values.
+        """
+        path_r = "/DISS_submission"
+        tree = etree.parse(self.directory+self.xml)
+        r = tree.xpath(path_r)
+        return r[0].attrib
+
+    def FindRestricted(self, date, server, json=False):
         files = (x for x in os.listdir(self.directory) if x.endswith(".xml"))
         marker = datetime.strptime(date, "%Y%m%d").date()
         pids = []
@@ -64,10 +76,11 @@ class ETDData:
 
 
             if filedate > marker and thirdparty == "N":
-                repo = newds.Repo_Connect("Development")
-                pid = newds.Get_Pid(xfile,repo)
+                repo = prereq.Repo_Connect(server)
+                pid = prereq.Get_Pid(xfile,repo)
                 if pid is not None:
                     pids.append(pid)
+
         if json == True:
             with open("pids.json", "w") as f:
                 data = json.dump(pids, f)
