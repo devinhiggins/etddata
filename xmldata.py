@@ -17,8 +17,8 @@ import itertools
 import matplotlib.pyplot as plt
 from pprint import pprint
 from msu_programs import College_Sort
-from program_clean import Program_Clean
-from new_datastream import Get_Pid, Repo_Connect
+from pclean import Program_Clean
+from prereq import Get_Pid, Repo_Connect
 
 # The list of dictionaries (data_list) should have one dictionary for each program.
 # This function checks to see whether a new program dictionary exists or not, then, if it does,

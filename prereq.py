@@ -7,9 +7,7 @@ from eulfedora.server import Repository
 def Get_Configs(server):
     config = ConfigParser.ConfigParser()
     cwd = os.path.dirname(os.path.abspath(__file__))
-    for f in os.listdir(cwd):
-        if f.endswith(".cfg"):
-            config_file = f
+    config_file = "default.cfg"
             
     config.read(cwd+"/"+config_file)
     username = config.get(server, "username")

@@ -3,6 +3,7 @@ from eulfedora.models import DigitalObject, XmlDatastream, DatastreamObject
 from eulxml.xmlmap import XmlObject
 from eulxml import xmlmap
 from lxml import etree
+from datetime import datetime, date
 import os
 import xmldata
 from eulfedora import api
@@ -47,8 +48,16 @@ def Update_Custom(server, filepath, purge=False):
         sr = pdfdates.ETDData(filepath, xml)
         rcodes = sr.SearchRestrictions()
         for key in rcodes:
+            value = rcodes[key]
             new_field = etree.SubElement(root, key)
-            new_field.text = rcodes[key]
+            if key == "third_party_search":
+                datecls = pdfdates.DocumentDates(filepath+xml)
+                mdate = datecls.FileModifiedDate()
+                marker = datetime.strptime("20130507", "%Y%m%d").date()
+                if mdate < marker and rcodes[key] == "N":
+                    value = "YN"
+            new_field.text = value
+
 
         pid = prereq.Get_Pid(xml, repo)
 
@@ -69,7 +78,7 @@ def Update_Custom(server, filepath, purge=False):
             new_datastream.content = xml_object
             new_datastream.label = "Custom metadata compiled by MSUL"
             new_datastream.save()
-            print i, " saved "+pid
+            
         
 
 
