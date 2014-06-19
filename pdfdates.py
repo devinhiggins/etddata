@@ -63,16 +63,16 @@ class ETDData:
         r = tree.xpath(path_r)
         return r[0].attrib
 
-    def FindRestricted(self, date, server, json=False):
+    def FindRestricted(self, date, server, jsonize=False):
         files = (x for x in os.listdir(self.directory) if x.endswith(".xml"))
         marker = datetime.strptime(date, "%Y%m%d").date()
         pids = []
         for xfile in files:
+            self.xml = xfile
             d = DocumentDates(self.directory+xfile)
             filedate = d.FileModifiedDate()
 
-            e = ETDData(self.directory)
-            thirdparty = e.SearchAuth(xfile)
+            thirdparty = self.SearchAuth(xfile)
 
 
             if filedate > marker and thirdparty == "N":
@@ -81,7 +81,7 @@ class ETDData:
                 if pid is not None:
                     pids.append(pid)
 
-        if json == True:
+        if jsonize == True:
             with open("pids.json", "w") as f:
                 data = json.dump(pids, f)
 
