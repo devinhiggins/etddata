@@ -1,4 +1,3 @@
 *.pyc
-*.cfg
-!default.cfg.example
+default.cfg
 .DS_Store
