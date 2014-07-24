@@ -29,7 +29,7 @@ class CustomEtd():
         path_program = "/DISS_submission/DISS_description/DISS_institution/DISS_inst_contact"
         r_program = self.tree.xpath(path_program)
         program_text = r_program[0].text
-        return pclean(program_text)
+        return pclean.Program_Clean(program_text)
 
     def GetKeywords(self):
         path_keywords = "/DISS_submission/DISS_description/DISS_categorization/DISS_keyword"
