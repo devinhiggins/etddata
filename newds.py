@@ -14,7 +14,7 @@ from . import prereq
 class CustomEtd():
     def __init__(self, data_xml, repo=None, server="Development"):
         if not repo:
-            repo = prereq.Repo_Connect(server)
+            repo = prereq.RepoConnect(server)
         self.data_xml = data_xml
         self.tree = etree.parse(self.data_xml)
 
@@ -29,7 +29,7 @@ class CustomEtd():
         path_program = "/DISS_submission/DISS_description/DISS_institution/DISS_inst_contact"
         r_program = self.tree.xpath(path_program)
         program_text = r_program[0].text
-        return program_text
+        return pclean(program_text)
 
     def GetKeywords(self):
         path_keywords = "/DISS_submission/DISS_description/DISS_categorization/DISS_keyword"
