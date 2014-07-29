@@ -5,6 +5,10 @@ def Program_Clean(program):
         clean_program = program[:program.index("- Master")].rstrip()
     elif " - Doctor" in program:
         clean_program = program[:program.index("- Doctor")].rstrip()
+    elif " -  Master" in program:
+        clean_program = program[:program.index(" -  Master")].rstrip()
+    elif " -  Doctor" in program:
+        clean_program = program[:program.index(" -  Doctor")].rstrip()
     else:
         clean_program = program
 
