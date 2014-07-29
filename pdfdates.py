@@ -1,5 +1,6 @@
 import os
-from pdfminer.pdfparser import PDFParser, PDFDocument
+from pdfminer.pdfparser import PDFParser
+from pdfminer.pdfdocument import PDFDocument
 from datetime import datetime, time, date
 from lxml import etree
 from pprint import pprint
@@ -72,7 +73,7 @@ class ETDData:
             d = DocumentDates(self.directory+xfile)
             filedate = d.FileModifiedDate()
 
-            thirdparty = self.SearchAuth(xfile)
+            thirdparty = self.SearchAuth()
 
 
             if filedate > marker and thirdparty == "N":
