@@ -16,7 +16,7 @@ def Get_Configs(server):
 
     return username,password,root
 
-def Repo_Connect(server):
+def RepoConnect(server):
     username,password,root = Get_Configs(server)
     repo = Repository(root=root,username=username, password=password)
     return repo

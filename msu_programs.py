@@ -4,7 +4,7 @@
 # However, the <div> structure in the html is not hierarchical and all information is on one long line,
 # which made it difficult to work with.
 
-from program_clean import Program_Clean
+from pclean import Program_Clean
 from pprint import pprint
 import itertools
 import networkx as nx

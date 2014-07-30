@@ -17,7 +17,7 @@ import itertools
 from pprint import pprint
 from msu_programs import College_Sort
 from pclean import Program_Clean
-from prereq import Get_Pid, Repo_Connect
+from prereq import Get_Pid, RepoConnect
 
 # The list of dictionaries (data_list) should have one dictionary for each program.
 # This function checks to see whether a new program dictionary exists or not, then, if it does,
@@ -88,7 +88,8 @@ def MARC_Data(path, item):
         
     else:
     	# Connect to repository to get MARC XML.
-        repo = Repo_Connect("Development")
+        if repo is None:
+            repo = RepoConnect("Development")
         pid = Get_Pid(item, repo)
         if pid is not None:
         	digital_object = repo.get_object(pid)
@@ -109,7 +110,7 @@ def MARC_Data(path, item):
 # Takes parameter called data which should be a list of dictionaries.The "Key" parameter is the dictionary key that uniquely specifies
 # each dictionary, and is the basis for comparison.
 
-def Graph_Builder(path, key, json=False):
+def GraphBuilder(path, key, json=False, output_path=None, repo=None):
 
     g = nx.Graph()
     dataset = XML_Data(path)
@@ -137,7 +138,7 @@ def Graph_Builder(path, key, json=False):
     #   print x,g[x][0]]g[x][1]]
     
     if json == True:
-    	Write_JSON(g, path)
+    	Write_JSON(g, path, output_path)
     
     return g
 
@@ -193,15 +194,16 @@ def XML_Data(path):
      
             
         dict_update(xml_dict, clean_program, data_list)
-	print data_list
     return data_list
 
 def Write_JSON(g, path):
+    if output_path is None:
+        output_path=path
 	filename = "etddata.json"
-	with open(path+filename, "w") as f:
+	with open(os.path.join(output_path,filename), "w") as f:
 		data = json_graph.dumps(g)
 		f.write(data)
-	print "Wrote file at "+path+filename
+	print "Wrote file at "+os.path.join(output_path,filename)
            
 #    output = open("/Users/higgi135/Documents/etdDataJSON_3", "wb")
 #    outputData = json.dumps(etds, indent=4, separators=(',',':'))
