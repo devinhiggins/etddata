@@ -76,6 +76,7 @@ class CustomEtd():
                 if mdate < marker and rcodes[key] == "N":
                     value = "YN"
             new_field.text = value
+            self.third_party_search = value
         return root
 
 
