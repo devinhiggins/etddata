@@ -125,6 +125,7 @@ def Update_Custom(server, filepath, purge=False):
                 if mdate < marker and rcodes[key] == "N":
                     value = "YN"
             new_field.text = value
+            self.third_party_search = value
 
 
         pid = prereq.Get_Pid(xml, repo)

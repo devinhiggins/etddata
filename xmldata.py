@@ -143,6 +143,24 @@ def GraphBuilder(path, key, json=False, output_path=None, repo=None):
     
     return g
 
+class SolrData(url):
+    def __init__(self):
+        self.url = url
+        self._MakeQuery()
+        self.program_dict = {}
+
+    def _RunQuery():
+        r = requests.get(url)
+        if r.ok:
+            self.data = r.json()
+            self._ProcessData()
+        else:
+            print "Request failed"
+
+    def _PrepareData():
+        documents = self.data["response"]["docs"]
+        for doc in documents:
+            self._GetSubjects()
 
 def XML_Data(path):
     xmlBBList = [item for item in os.listdir(path) if "DATA.xml" in item]
