@@ -1,5 +1,6 @@
 import os
-from pdfminer.pdfparser import PDFParser, PDFDocument
+from pdfminer.pdfparser import PDFParser
+from pdfminer.pdfdocument import PDFDocument
 from datetime import datetime, time, date
 from lxml import etree
 from pprint import pprint
@@ -43,11 +44,21 @@ class DocumentDates:
 
 class ETDData:
     def __init__(self, directory, xml=None):
+        """
+        Establishes class instance including file directory and xml file if provided.
+
+        Args:
+            directory(str)
+        """
         self.directory = directory
         if xml:
             self.xml = xml
 
     def SearchAuth(self):
+        """
+        Look up third-party search value XML file.
+        self.xml variable must be established.
+        """
         path_search = "/DISS_submission/@third_party_search"
         tree = etree.parse(self.directory+self.xml)
         r_search = tree.xpath(path_search)
@@ -55,8 +66,9 @@ class ETDData:
 
     def SearchRestrictions(self):
         """
-        Looks up publishing restriction codes for each XML document. Return dictionary
-        of attributes and their values.
+        Looks up publishing restriction codes for each XML document. 
+        Return dictionary of attributes and their values.
+        self.xml variable must be established.
         """
         path_r = "/DISS_submission"
         tree = etree.parse(self.directory+self.xml)
@@ -64,6 +76,18 @@ class ETDData:
         return r[0].attrib
 
     def FindRestricted(self, date, server, jsonize=False):
+        """
+        Finds pids for restricted ETDs and returns them in a list.
+        
+        Args:
+            date(str): Date after which ETD authors could select to restrict 3-p search.
+            server(str): Server to use (must be specified in configuration file).
+            jsonize(bool): Create JSON output if True.
+
+        Yields:
+            list: all PIDs from a given server which should be restricted.
+
+        """
         files = (x for x in os.listdir(self.directory) if x.endswith(".xml"))
         marker = datetime.strptime(date, "%Y%m%d").date()
         pids = []
@@ -72,10 +96,10 @@ class ETDData:
             d = DocumentDates(self.directory+xfile)
             filedate = d.FileModifiedDate()
 
-            thirdparty = self.SearchAuth(xfile)
+            thirdparty = self.SearchAuth()
 
 
-            if filedate > marker and thirdparty == "N":
+            if filedate > marker and (thirdparty == "N" or thirdparty == "O"):
                 repo = prereq.Repo_Connect(server)
                 pid = prereq.Get_Pid(xfile,repo)
                 if pid is not None:

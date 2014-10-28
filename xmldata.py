@@ -14,7 +14,6 @@ import requests
 import networkx as nx
 from networkx.readwrite import json_graph 
 import itertools
-import matplotlib.pyplot as plt
 from pprint import pprint
 from msu_programs import College_Sort
 from pclean import Program_Clean
