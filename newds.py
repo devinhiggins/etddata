@@ -40,9 +40,15 @@ class CustomEtd():
         path_category = "/DISS_submission/DISS_description/DISS_categorization/DISS_category/DISS_cat_desc"
         categories = xmldata.Get_Terms(self.tree, path_category)
         return categories
-        for cat in categories:
-            category = etree.SubElement(root,"category")
-            category.text = cat
+
+    def GetSubjects(self):
+        self.AddMarcXml()
+        path_subjects = "/marc:record/marc:datafield[@tag='650']/marc:subfield[@code='a']"
+        subjects = tree.xpath(path_subject, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
+        return subjects
+
+    def AddMarcXml(self):
+        self.marc_tree = etree.parse(self.data_xml[:-9]+"_MARCXML.xml")
 
     def GetCodes(self):
         sr = pdfdates.ETDData("", self.data_xml)
@@ -64,6 +70,14 @@ class CustomEtd():
         for cat in categories:
             category = etree.SubElement(root,"category")
             category.text = cat
+
+        subjects = self.GetSubjects()
+        if subjects != []:
+            for i,sub in enumerate(subjects):
+                if subjects[i] <> None:
+                    subject = etree.SubElement(root, "subject")
+                    subject.text = sub[i].text.strip(".").rstrip()
+
 
         rcodes = self.GetCodes()
         for key in rcodes:
