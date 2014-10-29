@@ -85,11 +85,10 @@ def MARC_Data(path, item):
     path_subject = "/marc:record/marc:datafield[@tag='650']/marc:subfield[@code='a']"
     if os.path.exists(new_path):
         tree = etree.parse(path+item.replace("DATA.xml","MARCXML.xml"))
-        
+        r_subjects = tree.xpath(path_subject, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
     else:
     	# Connect to repository to get MARC XML.
-        if repo is None:
-            repo = RepoConnect("Development")
+        repo = RepoConnect("Development")
         pid = Get_Pid(item, repo)
         if pid is not None:
         	digital_object = repo.get_object(pid)
@@ -97,10 +96,10 @@ def MARC_Data(path, item):
         	tree = etree.fromstring(marc_ds.content.serialize())
         
         	
-    if pid is not None:	
-    	r_subjects = tree.xpath(path_subject, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
-    else:
-    	r_subjects = []
+        if pid is not None:	
+        	r_subjects = tree.xpath(path_subject, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
+        else:
+    	   r_subjects = []
     if r_subjects != []:
         for i,j in enumerate(r_subjects):
             if r_subjects[i] <> None:
