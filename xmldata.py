@@ -142,8 +142,8 @@ def GraphBuilder(path, key, json=False, output_path=None, repo=None):
     
     return g
 
-class SolrData(url):
-    def __init__(self):
+class SolrData():
+    def __init__(self, url):
         self.url = url
         self._MakeQuery()
         self.program_dict = {}

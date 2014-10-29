@@ -25,7 +25,7 @@ def Get_Pid(xml, repo):
     localID = u'local:\xa0'+xml[:-9]
     pid_check = list(repo.find_objects(identifier=localID))
     if len(pid_check) == 0:
-        pid_check = list(repo.find_objects(identifier=localID.replace("\xa0", ""))
+        pid_check = list(repo.find_objects(identifier=localID.replace("\xa0", "")))
     if len(pid_check) == 1:
         pid = str(pid_check[0])
     elif len(pid_check) == 0:
