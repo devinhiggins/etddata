@@ -43,8 +43,8 @@ class CustomEtd():
 
     def GetSubjects(self):
         self.AddMarcXml()
-        path_subjects = "/marc:record/marc:datafield[@tag='650']/marc:subfield[@code='a']"
-        subjects = tree.xpath(path_subject, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
+        path_subjects = "/marc:record/marc:datafield[@tag='650' and @ind2='0']/marc:subfield[@code='a']"
+        subjects = tree.xpath(path_subjects, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
         return subjects
 
     def AddMarcXml(self):
@@ -146,6 +146,10 @@ def Update_Custom(server, filepath, purge=False):
         pid = prereq.Get_Pid(xml, repo)
 
         if pid is not None:
+
+            digital_object = repo.get_object(pid)
+            
+
             i+=1
             custom_xml = "/Volumes/archivematica/ETD-Custom_Datastream/"+xml[:-9]+"_CUSTOM.xml"
             with open(custom_xml, "w") as f:
@@ -153,7 +157,7 @@ def Update_Custom(server, filepath, purge=False):
                     
             xml_object = xmlmap.load_xmlobject_from_file(custom_xml)
 
-            digital_object = repo.get_object(pid)
+            
 
             if purge is True:
                 digital_object.api.purgeDatastream(pid,"CUSTOM")

@@ -144,14 +144,14 @@ def GraphBuilder(path, key, json=False, output_path=None, repo=None):
 class SolrData():
     def __init__(self, url):
         self.url = url
-        self._MakeQuery()
+        self._RunQuery()
         self.program_dict = {}
 
     def _RunQuery():
-        r = requests.get(url)
+        r = requests.get(self.url)
         if r.ok:
             self.data = r.json()
-            self._ProcessData()
+            self._PrepareData()
         else:
             print "Request failed"
 
@@ -159,6 +159,8 @@ class SolrData():
         documents = self.data["response"]["docs"]
         for doc in documents:
             self._GetSubjects()
+
+    
 
 def XML_Data(path):
     xmlBBList = [item for item in os.listdir(path) if "DATA.xml" in item]
