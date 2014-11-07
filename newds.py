@@ -47,6 +47,35 @@ class CustomEtd():
         subjects = tree.xpath(path_subjects, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
         return subjects
 
+    def GetFullSubjects(self):
+        if not self.marc_tree:
+            self.AddMarcXml()
+        full_subjects = []
+        subject_fields = ["600","650","651"]
+        for field in subject_fields:
+            xpath = "/marc:record/marc:datafield[@tag=subject_field and @ind2='0']".replace("subject_field",field)
+            s_head = self.marc_tree.xpath(xpath, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
+            for subject in s_head:
+                subject = []
+                for subject_field in subject:
+                    subject.append((subject_field.tag, subject_field.text))
+                full_subjects.append(self.CombineFields(subject, field)
+
+    def CombineFields(self, subject, field):
+        if len(subject) == 1:
+            subject_string = subject[0]
+        elif field = "600":
+            subdivisions = ["v", "x", "y", "z"]
+            name_content = [s[1]] for s in subject if s[0] not in subdivisions]
+        else:
+            subject_content = [s[1] for s in subject]
+            subject_string = "--".join(subject_content)
+
+
+
+        
+
+
     def AddMarcXml(self):
         self.marc_tree = etree.parse(self.data_xml[:-9]+"_MARCXML.xml")
 
@@ -77,6 +106,8 @@ class CustomEtd():
                 if subjects[i] <> None:
                     subject = etree.SubElement(root, "subject")
                     subject.text = sub[i].text.strip(".").rstrip()
+
+        full_subjects = self.GetFullSubjects()
 
 
         rcodes = self.GetCodes()
