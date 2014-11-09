@@ -51,7 +51,7 @@ class CustomEtd():
         if not self.marc_tree:
             self.AddMarcXml()
         full_subjects = []
-        subject_fields = ["600","650","651"]
+        subject_fields = ["600","610","611","630","648","650","651"]
         for field in subject_fields:
             xpath = "/marc:record/marc:datafield[@tag=subject_field and @ind2='0']".replace("subject_field",field)
             s_head = self.marc_tree.xpath(xpath, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
@@ -59,21 +59,26 @@ class CustomEtd():
                 subject = []
                 for subject_field in subject:
                     subject.append((subject_field.tag, subject_field.text))
-                full_subjects.append(self.CombineFields(subject, field)
+                full_subjects.append(self.CombineFields(subject, field))
+
+        return full_subjects
 
     def CombineFields(self, subject, field):
+        name_fields = ["600", "610", "611","630"]
         if len(subject) == 1:
             subject_string = subject[0]
-        elif field = "600":
+        elif field in name_fields:
             subdivisions = ["v", "x", "y", "z"]
-            name_content = [s[1]] for s in subject if s[0] not in subdivisions]
+            name_content = [s[1] for s in subject if s[0] not in subdivisions]
+            name = " ".join(name_content)
+            subdivision_content = [s[1] for s in subject if s[0] in subdivisions]
+            subject_content = subdivision_content.insert(0, name)
+            subject_string = "--".join(subject_content)
         else:
             subject_content = [s[1] for s in subject]
             subject_string = "--".join(subject_content)
 
-
-
-        
+        return subject_string
 
 
     def AddMarcXml(self):
@@ -108,6 +113,10 @@ class CustomEtd():
                     subject.text = sub[i].text.strip(".").rstrip()
 
         full_subjects = self.GetFullSubjects()
+        if subjects != []:
+            for sub in full_subjects:
+                full_subject = etree.SubElement(root, "full_subject")
+                full_subject.text = sub
 
 
         rcodes = self.GetCodes()
