@@ -7,13 +7,15 @@ class SolrData():
         pass
 
     @staticmethod
-    def ResultCount(self, query_url):
-        
-        r = requests.get(query_url)
-        if r.ok:
-            results = r.json()
-            item_count = results['response']['numFound']
-        else:
+    def ResultCount(query_url):
+        try:
+            r = requests.get(query_url, timeout=5)
+            if r.ok:
+                results = r.json()
+                item_count = results['response']['numFound']
+            else:
+                item_count = 0
+        except:
             item_count = 0
 
         return item_count
@@ -29,7 +31,7 @@ class SolrEtdData(SolrData):
         
 
     def GetAllUrl(self):
-        
+        pass
 
     def GetAll(self):
         item_count = self.ResultCount(self.query_url)

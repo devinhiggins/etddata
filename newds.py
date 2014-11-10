@@ -168,6 +168,8 @@ def Update_Custom(server, filepath, purge=False):
                 keyword = etree.SubElement(root,"keyword")
                 keyword.text = key
 
+
+
         sr = pdfdates.ETDData(filepath, xml)
         rcodes = sr.SearchRestrictions()
         for key in rcodes:
@@ -188,6 +190,10 @@ def Update_Custom(server, filepath, purge=False):
         if pid is not None:
 
             digital_object = repo.get_object(pid)
+
+            marcxml_object = digital_object.getDatastreamObject("MARCXML")
+            marcxml_content = marcxml_object.content.serialize()
+            marc_tree = etree.fromstring(marcxml_content)
             
 
             i+=1
@@ -196,9 +202,7 @@ def Update_Custom(server, filepath, purge=False):
                 f.write(etree.tostring(root, pretty_print=True, encoding='utf-8', xml_declaration=True))
                     
             xml_object = xmlmap.load_xmlobject_from_file(custom_xml)
-
-            
-
+        
             if purge is True:
                 digital_object.api.purgeDatastream(pid,"CUSTOM")
 
