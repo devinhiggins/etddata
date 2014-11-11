@@ -113,7 +113,7 @@ class CustomEtd():
                     subject.text = sub[i].text.strip(".").rstrip()
 
         full_subjects = self.GetFullSubjects()
-        if subjects != []:
+        if full_subjects != []:
             for sub in full_subjects:
                 full_subject = etree.SubElement(root, "full_subject")
                 full_subject.text = sub
@@ -150,7 +150,6 @@ def Update_Custom(server, filepath, purge=False):
         path_program = "/DISS_submission/DISS_description/DISS_institution/DISS_inst_contact"
         path_keywords = "/DISS_submission/DISS_description/DISS_categorization/DISS_keyword"
         path_category = "/DISS_submission/DISS_description/DISS_categorization/DISS_category/DISS_cat_desc"
-
 
         r_program = tree.xpath(path_program)
         root = etree.Element("custom")
@@ -194,7 +193,34 @@ def Update_Custom(server, filepath, purge=False):
             marcxml_object = digital_object.getDatastreamObject("MARCXML")
             marcxml_content = marcxml_object.content.serialize()
             marc_tree = etree.fromstring(marcxml_content)
+
+            path_subjects = "/marc:record/marc:datafield[@tag='650' and @ind2='0']/marc:subfield[@code='a']"
+            subjects = tree.xpath(path_subjects, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
+            if subjects != []:
+                for i,sub in enumerate(subjects):
+                    if subjects[i] <> None:
+                        subject = etree.SubElement(root, "subject")
+                        subject.text = sub[i].text.strip(".").rstrip()
             
+
+            full_subjects = []
+            subject_fields = ["600","610","611","630","648","650","651"]
+            for field in subject_fields:
+                xpath = "/marc:record/marc:datafield[@tag=subject_field and @ind2='0']".replace("subject_field",field)
+                s_head = self.marc_tree.xpath(xpath, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
+                for subject in s_head:
+                    subject = []
+                    for subject_field in subject:
+                        subject.append((subject_field.tag, subject_field.text))
+                    full_subjects.append(self.CombineFields(subject, field))
+
+
+            if full_subjects != []:
+                for sub in full_subjects:
+                    full_subject = etree.SubElement(root, "full_subject")
+                    full_subject.text = sub
+
+
 
             i+=1
             custom_xml = "/Volumes/archivematica/ETD-Custom_Datastream/"+xml[:-9]+"_CUSTOM.xml"
