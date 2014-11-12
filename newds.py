@@ -53,32 +53,36 @@ class CustomEtd():
         full_subjects = []
         subject_fields = ["600","610","611","630","648","650","651"]
         for field in subject_fields:
-            xpath = "/marc:record/marc:datafield[@tag=subject_field and @ind2='0']".replace("subject_field",field)
+            xpath = "/marc:record/marc:datafield[@tag='subject_field' and @ind2!='7']".replace("subject_field",field)
             s_head = self.marc_tree.xpath(xpath, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
             for subject in s_head:
                 subject = []
                 for subject_field in subject:
                     subject.append((subject_field.tag, subject_field.text))
-                full_subjects.append(self.CombineFields(subject, field))
+                full_subjects.append(CombineFields(subject, field))
 
         return full_subjects
 
-    def CombineFields(self, subject, field):
+    @staticmethod
+    def CombineFields(subject, field):
         name_fields = ["600", "610", "611","630"]
         if len(subject) == 1:
-            subject_string = subject[0]
+            subject_string = subject[0][1].rstrip().lstrip()
         elif field in name_fields:
+            print field
             subdivisions = ["v", "x", "y", "z"]
-            name_content = [s[1] for s in subject if s[0] not in subdivisions]
+            name_content = [s[1].rstrip().lstrip() for s in subject if s[0] not in subdivisions]
             name = " ".join(name_content)
-            subdivision_content = [s[1] for s in subject if s[0] in subdivisions]
-            subject_content = subdivision_content.insert(0, name)
-            subject_string = "--".join(subject_content)
+            subdivision_content = "--".join([s[1].rstrip().lstrip() for s in subject if s[0] in subdivisions])
+            if subdivision_content is True:
+                subject_string = "--".join([name, subdivision_content])
+            else:
+                subject_string = name
         else:
-            subject_content = [s[1] for s in subject]
+            subject_content = [s[1].rstrip().lstrip() for s in subject]
             subject_string = "--".join(subject_content)
 
-        return subject_string
+        return subject_string.rstrip().lstrip()
 
 
     def AddMarcXml(self):
@@ -181,44 +185,46 @@ def Update_Custom(server, filepath, purge=False):
                 if mdate < marker and rcodes[key] == "N":
                     value = "YN"
             new_field.text = value
-            self.third_party_search = value
 
 
         pid = prereq.Get_Pid(xml, repo)
 
         if pid is not None:
+            print "pid", pid
 
             digital_object = repo.get_object(pid)
 
             marcxml_object = digital_object.getDatastreamObject("MARCXML")
             marcxml_content = marcxml_object.content.serialize()
             marc_tree = etree.fromstring(marcxml_content)
+            subject_fields = ["600","610","611","630","648","650","651"]
 
-            path_subjects = "/marc:record/marc:datafield[@tag='650' and @ind2='0']/marc:subfield[@code='a']"
-            subjects = tree.xpath(path_subjects, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
-            if subjects != []:
-                for i,sub in enumerate(subjects):
-                    if subjects[i] <> None:
-                        subject = etree.SubElement(root, "subject")
-                        subject.text = sub[i].text.strip(".").rstrip()
+            for field in subject_fields:
+                path_subjects = "/marc:record/marc:datafield[@tag='[subject_field]' and @ind2!='7']/marc:subfield[@code='a']".replace("[subject_field]", field)
+                subjects = marc_tree.xpath(path_subjects, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
+                if len(subjects) != 0:
+                    for i,sub in enumerate(subjects):
+                        if subjects[i] <> None:
+                            subject = etree.SubElement(root, "subject")
+                            subject.text = sub.text.strip(".").rstrip()
             
 
             full_subjects = []
-            subject_fields = ["600","610","611","630","648","650","651"]
+            
             for field in subject_fields:
-                xpath = "/marc:record/marc:datafield[@tag=subject_field and @ind2='0']".replace("subject_field",field)
-                s_head = self.marc_tree.xpath(xpath, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
+                xpath = "/marc:record/marc:datafield[@tag='[subject_field]' and @ind2='0']".replace("[subject_field]",field)
+                s_head = marc_tree.xpath(xpath, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
                 for subject in s_head:
-                    subject = []
+                    subject_parts = []
                     for subject_field in subject:
-                        subject.append((subject_field.tag, subject_field.text))
-                    full_subjects.append(self.CombineFields(subject, field))
-
+                        subject_parts.append((subject_field.tag, subject_field.text))
+                    full_subjects.append(CustomEtd.CombineFields(subject_parts, field))
 
             if full_subjects != []:
+                print full_subjects
                 for sub in full_subjects:
                     full_subject = etree.SubElement(root, "full_subject")
-                    full_subject.text = sub
+                    full_subject.text = sub.rstrip()
 
 
 
