@@ -44,7 +44,7 @@ class CustomEtd():
     def GetSubjects(self):
         self.AddMarcXml()
         path_subjects = "/marc:record/marc:datafield[@tag='650' and @ind2='0']/marc:subfield[@code='a']"
-        subjects = tree.xpath(path_subjects, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
+        subjects = self.marc_tree.xpath(path_subjects, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
         return subjects
 
     def GetFullSubjects(self):
