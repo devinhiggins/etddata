@@ -138,6 +138,26 @@ class CustomEtd():
         return root
 
 
+class DatastreamXml():
+    def __init__(self, pid):
+        username,password,root = prereq.Get_Configs(server)
+        self.repo = Repository(root=root,username=username, password=password)
+        self.pid = pid
+
+    def ReplaceDs(self, dsid, xml_path):
+        self.dsid = dsid
+        self.xml_path = xml_path
+        xml_object = self._MakeXmlObject()
+        digital_object = repo.get_object(self.pid)
+        datastream = DatastreamObject(digital_object, self.dsid)
+        datastream.content = xml_object
+        new_datastream.label = "_".join(self.pid.repalce(":", ""), dsid)
+        new_datastream.save()
+
+    def _MakeXmlObject(self):
+        return xmlmap.load_xmlobject_from_file(self.xml_path)
+
+
 def Update_Custom(server, filepath, purge=False):
 
     i = 0
