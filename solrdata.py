@@ -9,7 +9,7 @@ class SolrData():
     @staticmethod
     def ResultCount(query_url):
         try:
-            r = requests.get(query_url, timeout=5)
+            r = requests.get(query_url, timeout=1)
             if r.ok:
                 results = r.json()
                 item_count = results['response']['numFound']
