@@ -7,9 +7,9 @@ from datetime import datetime, date
 import os
 import xmldata
 from eulfedora import api
-from . import pdfdates
-from . import pclean
-from . import prereq
+import pdfdates
+import pclean
+import prereq
 
 class CustomEtd():
     def __init__(self, data_xml, repo=None, server="Development"):
@@ -86,7 +86,14 @@ class CustomEtd():
 
 
     def AddMarcXml(self):
-        self.marc_tree = etree.parse(self.data_xml[:-9]+"_MARCXML.xml")
+        self.marc_tree = None
+        marc_path = self.data_xml[:-9]+"_MARCXML.xml"
+        if os.path.isfile(marc_path):
+            self.marc_tree = etree.parse(self.data_xml[:-9]+"_MARCXML.xml")
+        else:
+            pass
+            #TODOex
+
 
     def GetCodes(self):
         sr = pdfdates.ETDData("", self.data_xml)
@@ -158,58 +165,57 @@ class DatastreamXml():
         return xmlmap.load_xmlobject_from_file(self.xml_path)
 
 
-def Update_Custom(server, filepath, purge=False):
-
+def Update_Custom(server, path, purge=False):
+    """
+    Function to update custom xml datastream for all existing objects.
+    """
     i = 0
-    path = filepath
     username,password,root = prereq.Get_Configs(server)
     repo = Repository(root=root,username=username, password=password)
     
-    xml_files = [x for x in os.listdir(path) if "DATA.xml" in x]
+    xml_files = (x for x in os.listdir(path) if "DATA.xml" in x)
 
     for xml in xml_files:
-    
-        tree = etree.parse(path+xml)
-
-        path_program = "/DISS_submission/DISS_description/DISS_institution/DISS_inst_contact"
-        path_keywords = "/DISS_submission/DISS_description/DISS_categorization/DISS_keyword"
-        path_category = "/DISS_submission/DISS_description/DISS_categorization/DISS_category/DISS_cat_desc"
-
-        r_program = tree.xpath(path_program)
-        root = etree.Element("custom")
-        program = etree.SubElement(root, "program")
-        program.text = pclean.Program_Clean(r_program[0].text)
-
-        categories = xmldata.Get_Terms(tree, path_category)
-        for cat in categories:
-            category = etree.SubElement(root,"category")
-            category.text = cat
-
-        keywords = xmldata.Get_Terms(tree, path_keywords)
-        if keywords <> [None]:
-            for key in keywords:
-                keyword = etree.SubElement(root,"keyword")
-                keyword.text = key
-
-
-
-        sr = pdfdates.ETDData(filepath, xml)
-        rcodes = sr.SearchRestrictions()
-        for key in rcodes:
-            value = rcodes[key]
-            new_field = etree.SubElement(root, key)
-            if key == "third_party_search":
-                datecls = pdfdates.DocumentDates(filepath+xml)
-                mdate = datecls.FileModifiedDate()
-                marker = datetime.strptime("20130507", "%Y%m%d").date()
-                if mdate < marker and rcodes[key] == "N":
-                    value = "YN"
-            new_field.text = value
-
 
         pid = prereq.Get_Pid(xml, repo)
 
         if pid is not None:
+  
+            tree = etree.parse(path+xml)
+
+            path_program = "/DISS_submission/DISS_description/DISS_institution/DISS_inst_contact"
+            path_keywords = "/DISS_submission/DISS_description/DISS_categorization/DISS_keyword"
+            path_category = "/DISS_submission/DISS_description/DISS_categorization/DISS_category/DISS_cat_desc"
+
+            r_program = tree.xpath(path_program)
+            root = etree.Element("custom")
+            program = etree.SubElement(root, "program")
+            program.text = pclean.Program_Clean(r_program[0].text)
+
+            categories = xmldata.Get_Terms(tree, path_category)
+            for cat in categories:
+                category = etree.SubElement(root,"category")
+                category.text = cat
+
+            keywords = xmldata.Get_Terms(tree, path_keywords)
+            if keywords <> [None]:
+                for key in keywords:
+                    keyword = etree.SubElement(root,"keyword")
+                    keyword.text = key
+
+            sr = pdfdates.ETDData(path, xml)
+            rcodes = sr.SearchRestrictions()
+            for key in rcodes:
+                value = rcodes[key]
+                new_field = etree.SubElement(root, key)
+                if key == "third_party_search":
+                    datecls = pdfdates.DocumentDates(path+xml)
+                    mdate = datecls.FileModifiedDate()
+                    marker = datetime.strptime("20130507", "%Y%m%d").date()
+                    if mdate < marker and rcodes[key] == "N":
+                        value = "YN"
+                new_field.text = value
+
             print "pid", pid
 
             digital_object = repo.get_object(pid)
@@ -223,10 +229,13 @@ def Update_Custom(server, filepath, purge=False):
                 path_subjects = "/marc:record/marc:datafield[@tag='[subject_field]' and @ind2!='7']/marc:subfield[@code='a']".replace("[subject_field]", field)
                 subjects = marc_tree.xpath(path_subjects, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
                 if len(subjects) != 0:
+                    print "===SUBJECTS==="
+                    subjects = list(set([s.text.strip().rstrip(".,;") for s in subjects]))
                     for i,sub in enumerate(subjects):
                         if subjects[i] <> None:
+                            print sub
                             subject = etree.SubElement(root, "subject")
-                            subject.text = sub.text.strip(".").rstrip()
+                            subject.text = sub
             
 
             full_subjects = []
@@ -241,7 +250,6 @@ def Update_Custom(server, filepath, purge=False):
                     full_subjects.append(CustomEtd.CombineFields(subject_parts, field))
 
             if full_subjects != []:
-                print full_subjects
                 for sub in full_subjects:
                     full_subject = etree.SubElement(root, "full_subject")
                     full_subject.text = sub.rstrip()
@@ -249,7 +257,7 @@ def Update_Custom(server, filepath, purge=False):
 
 
             i+=1
-            custom_xml = "/Volumes/archivematica/ETD-Custom_Datastream/"+xml[:-9]+"_CUSTOM.xml"
+            custom_xml = "/Volumes/fedcom_ingest/ETD-Custom_Datastream/"+xml[:-9]+"_CUSTOM.xml"
             with open(custom_xml, "w") as f:
                 f.write(etree.tostring(root, pretty_print=True, encoding='utf-8', xml_declaration=True))
                     
@@ -257,6 +265,7 @@ def Update_Custom(server, filepath, purge=False):
         
             if purge is True:
                 digital_object.api.purgeDatastream(pid,"CUSTOM")
+                print "PURGED CUSTOM"
 
             new_datastream = DatastreamObject(digital_object,"CUSTOM","Custom metadata compiled by MSUL",mimetype="text/xml",control_group="X")
             new_datastream.content = xml_object
