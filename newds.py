@@ -7,6 +7,7 @@ from datetime import datetime, date
 import os
 import xmldata
 from eulfedora import api
+from msu_programs import College_Sort
 import pdfdates
 import pclean
 import prereq
@@ -43,9 +44,13 @@ class CustomEtd():
 
     def GetSubjects(self):
         self.AddMarcXml()
-        path_subjects = "/marc:record/marc:datafield[@tag='650' and @ind2='0']/marc:subfield[@code='a']"
-        subjects = self.marc_tree.xpath(path_subjects, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
-        return subjects
+        all_subjects = []
+        subject_fields = ["600","610","611","630","648","650","651"]
+        for field in subject_fields:
+            path_subjects = "/marc:record/marc:datafield[@tag='subject_field' and @ind2='0']/marc:subfield[@code='a']".replace("subject_field",field)
+            subjects = self.marc_tree.xpath(path_subjects, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
+            all_subjects += subjects
+        return all_subjects
 
     def GetFullSubjects(self):
         if not self.marc_tree:
@@ -62,6 +67,19 @@ class CustomEtd():
                 full_subjects.append(CombineFields(subject, field))
 
         return full_subjects
+
+    def GetInstitutionData(self):
+        """
+        Return dictionary with key as program (clean) and value as a tuple containing (college, dept).
+        Dept is None if not found.
+        """
+        int_data = College_Sort()
+        return int_data
+
+    def GetProgramAffiliations(program):
+        
+        program_affiliations = self.GetInstitutionData().get(program_name, (None, None))
+        return program_affiliations
 
     @staticmethod
     def CombineFields(subject, field):
@@ -103,7 +121,8 @@ class CustomEtd():
     def CustomDs(self):
         root = etree.Element("custom")
         program = etree.SubElement(root, "program")
-        program.text = pclean.Program_Clean(self.GetProgram())
+        program_name = pclean.Program_Clean(self.GetProgram())
+        program.text = program_name
 
         keywords = self.GetKeywords()
         if keywords <> [None]:
@@ -128,7 +147,6 @@ class CustomEtd():
             for sub in full_subjects:
                 full_subject = etree.SubElement(root, "full_subject")
                 full_subject.text = sub
-
 
         rcodes = self.GetCodes()
         for key in rcodes:
@@ -158,7 +176,7 @@ class DatastreamXml():
         digital_object = repo.get_object(self.pid)
         datastream = DatastreamObject(digital_object, self.dsid)
         datastream.content = xml_object
-        new_datastream.label = "_".join(self.pid.repalce(":", ""), dsid)
+        new_datastream.label = "_".join(self.pid.replace(":", ""), dsid)
         new_datastream.save()
 
     def _MakeXmlObject(self):
