@@ -13,11 +13,14 @@ import pclean
 import prereq
 
 class CustomEtd():
-    def __init__(self, data_xml, repo=None, server="Development"):
+    def __init__(self, data_xml, repo=None, server="Development", pid=None):
         if not repo:
             repo = prereq.RepoConnect(server)
         self.data_xml = data_xml
         self.tree = etree.parse(self.data_xml)
+        self.marc_tree = None
+        self.pid = pid
+        self.server = server
 
     def CreateXmlFile(self):
         root = self.CustomDs()
@@ -37,12 +40,24 @@ class CustomEtd():
         keywords = xmldata.Get_Terms(self.tree, path_keywords)
         return keywords
 
+    def GetCommittee(self):
+        path_committee = "/DISS_submission/DISS_description/DISS_cmte_member/DISS_name"
+        committee = xmldata.Get_Names(self.tree, path_committee)
+        return committee
+
+    def GetAdvisor(self):
+        path_advisor = "/DISS_submission/DISS_description/DISS_advisor/DISS_name"
+        advisor = xmldata.Get_Names(self.tree, path_advisor)
+        return advisor
+
     def GetCategory(self):
         path_category = "/DISS_submission/DISS_description/DISS_categorization/DISS_category/DISS_cat_desc"
         categories = xmldata.Get_Terms(self.tree, path_category)
         return categories
 
     def GetSubjects(self):
+        if self.marc_tree is None:
+            self.AddMarcXml()
         self.AddMarcXml()
         all_subjects = []
         subject_fields = ["600","610","611","630","648","650","651"]
@@ -53,7 +68,7 @@ class CustomEtd():
         return all_subjects
 
     def GetFullSubjects(self):
-        if not self.marc_tree:
+        if self.marc_tree is None:
             self.AddMarcXml()
         full_subjects = []
         subject_fields = ["600","610","611","630","648","650","651"]
@@ -61,24 +76,21 @@ class CustomEtd():
             xpath = "/marc:record/marc:datafield[@tag='subject_field' and @ind2!='7']".replace("subject_field",field)
             s_head = self.marc_tree.xpath(xpath, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
             for subject in s_head:
-                subject = []
+                subjects = []
                 for subject_field in subject:
-                    subject.append((subject_field.tag, subject_field.text))
-                full_subjects.append(CombineFields(subject, field))
+                    subjects.append((subject_field.tag, subject_field.text))
+                full_subjects.append(CustomEtd.CombineFields(subjects, field))
 
         return full_subjects
 
-    def GetInstitutionData(self):
-        """
-        Return dictionary with key as program (clean) and value as a tuple containing (college, dept).
-        Dept is None if not found.
-        """
-        int_data = College_Sort()
-        return int_data
+    @staticmethod
+    def NormalizeString(value):
+        normalized_value = value.lower().strip().rstrip(".,/;:").title()
+        return normalized_value
 
+    @staticmethod
     def GetProgramAffiliations(program):
-        
-        program_affiliations = self.GetInstitutionData().get(program_name, (None, None))
+        program_affiliations = College_Sort().get(program, (None, None))
         return program_affiliations
 
     @staticmethod
@@ -106,12 +118,12 @@ class CustomEtd():
     def AddMarcXml(self):
         self.marc_tree = None
         marc_path = self.data_xml[:-9]+"_MARCXML.xml"
-        if os.path.isfile(marc_path):
-            self.marc_tree = etree.parse(self.data_xml[:-9]+"_MARCXML.xml")
-        else:
-            pass
-            #TODOex
+        if self.pid:
+            dsx = DatastreamXml(self.pid, server=self.server)
+            self.marc_tree = dsx.GetMarcDs()
 
+        elif os.path.isfile(marc_path):
+            self.marc_tree = etree.parse(self.data_xml[:-9]+"_MARCXML.xml")
 
     def GetCodes(self):
         sr = pdfdates.ETDData("", self.data_xml)
@@ -128,25 +140,44 @@ class CustomEtd():
         if keywords <> [None]:
             for key in keywords:
                 keyword = etree.SubElement(root,"keyword")
-                keyword.text = key
+                keyword.text = CustomEtd.NormalizeString(key)
 
         categories = self.GetCategory()
         for cat in categories:
             category = etree.SubElement(root,"category")
             category.text = cat
 
+        committee = self.GetCommittee()
+        for member in committee:
+            committee_field = etree.SubElement(root, "committee")
+            committee_field.text = CustomEtd.NormalizeString(member)
+
+        advisor = self.GetAdvisor()
+        for name in advisor:
+            advisor_field = etree.SubElement(root, "committee")
+            advisor_field.text = CustomEtd.NormalizeString(name)
+
         subjects = self.GetSubjects()
         if subjects != []:
             for i,sub in enumerate(subjects):
                 if subjects[i] <> None:
                     subject = etree.SubElement(root, "subject")
-                    subject.text = sub[i].text.strip(".").rstrip()
+                    subject.text = sub.text.strip(".").rstrip()
 
         full_subjects = self.GetFullSubjects()
         if full_subjects != []:
             for sub in full_subjects:
                 full_subject = etree.SubElement(root, "full_subject")
                 full_subject.text = sub
+
+        college, department = CustomEtd.GetProgramAffiliations(program_name)
+        if college is not None:
+            college_field = etree.SubElement(root, "college")
+            college_field.text = college
+
+        if department is not None:
+            dept_field = etree.SubElement(root, "department")
+            dept_field.text = department
 
         rcodes = self.GetCodes()
         for key in rcodes:
@@ -164,16 +195,22 @@ class CustomEtd():
 
 
 class DatastreamXml():
-    def __init__(self, pid):
-        username,password,root = prereq.Get_Configs(server)
-        self.repo = Repository(root=root,username=username, password=password)
+    def __init__(self, pid, repo=None, server="Development"):
+        self.repo = repo
+        if not repo:
+            username,password,root = prereq.Get_Configs(server)
+            self.repo = Repository(root=root,username=username, password=password)
         self.pid = pid
+        self.GetObject()
+
+    def GetObject(self):
+        self.digital_object = self.repo.get_object(self.pid)
 
     def ReplaceDs(self, dsid, xml_path):
         self.dsid = dsid
         self.xml_path = xml_path
         xml_object = self._MakeXmlObject()
-        digital_object = repo.get_object(self.pid)
+        digital_object = self.repo.get_object(self.pid)
         datastream = DatastreamObject(digital_object, self.dsid)
         datastream.content = xml_object
         new_datastream.label = "_".join(self.pid.replace(":", ""), dsid)
@@ -181,6 +218,46 @@ class DatastreamXml():
 
     def _MakeXmlObject(self):
         return xmlmap.load_xmlobject_from_file(self.xml_path)
+
+    def GetMarcDs(self):
+        self.marcxml_object = self.digital_object.getDatastreamObject("MARCXML")
+        self.marcxml_content = self.marcxml_object.content.serialize()
+        self.marc_tree = etree.fromstring(self.marcxml_content)
+        return self.marc_tree
+
+def UpdateCustom(server, path, purge=False):
+    """
+    Function to update custom xml datastream for all existing objects.
+    """
+    i = 0
+    username,password,root = prereq.Get_Configs(server)
+    repo = Repository(root=root,username=username, password=password)
+    
+    xml_files = (x for x in os.listdir(path) if "DATA.xml" in x)
+    for xml in xml_files:
+        print xml
+        pid = prereq.Get_Pid(xml, repo)
+        dsx = DatastreamXml(pid, server=server, repo=repo)
+        dsx.GetObject
+        if pid is not None:
+            custom_ds = CustomEtd(os.path.join(path, xml), server=server, pid=pid)
+            root = custom_ds.CustomDs()
+
+            custom_xml = os.path.join(path, xml.replace("DATA", "CUSTOM"))
+            
+            with open(custom_xml, "w") as f:
+                f.write(etree.tostring(root, pretty_print=True, encoding='utf-8', xml_declaration=True))
+                    
+            xml_object = xmlmap.load_xmlobject_from_file(custom_xml)
+        
+            if purge is True:
+                dsx.digital_object.api.purgeDatastream(pid,"CUSTOM")
+                print "PURGED CUSTOM"
+
+            new_datastream = DatastreamObject(dsx.digital_object,"CUSTOM","Custom metadata compiled by MSUL",mimetype="text/xml",control_group="X")
+            new_datastream.content = xml_object
+            new_datastream.label = "Custom metadata compiled by MSUL"
+            new_datastream.save()
 
 
 def Update_Custom(server, path, purge=False):
@@ -247,11 +324,9 @@ def Update_Custom(server, path, purge=False):
                 path_subjects = "/marc:record/marc:datafield[@tag='[subject_field]' and @ind2!='7']/marc:subfield[@code='a']".replace("[subject_field]", field)
                 subjects = marc_tree.xpath(path_subjects, namespaces={"marc": "http://www.loc.gov/MARC21/slim"})
                 if len(subjects) != 0:
-                    print "===SUBJECTS==="
                     subjects = list(set([s.text.strip().rstrip(".,;") for s in subjects]))
                     for i,sub in enumerate(subjects):
                         if subjects[i] <> None:
-                            print sub
                             subject = etree.SubElement(root, "subject")
                             subject.text = sub
             
@@ -271,8 +346,6 @@ def Update_Custom(server, path, purge=False):
                 for sub in full_subjects:
                     full_subject = etree.SubElement(root, "full_subject")
                     full_subject.text = sub.rstrip()
-
-
 
             i+=1
             custom_xml = "/Volumes/fedcom_ingest/ETD-Custom_Datastream/"+xml[:-9]+"_CUSTOM.xml"
