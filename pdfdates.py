@@ -1,7 +1,7 @@
 import os
-#from pdfminer.pdfparser import PDFParser
-#from pdfminer.pdfdocument import PDFDocument
-from pdfminer.pdfparser import PDFParser, PDFDocument
+from pdfminer.pdfparser import PDFParser
+from pdfminer.pdfdocument import PDFDocument
+#from pdfminer.pdfparser import PDFParser, PDFDocument
 from datetime import datetime, time, date
 from lxml import etree
 from pprint import pprint
