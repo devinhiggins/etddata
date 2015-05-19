@@ -141,6 +141,39 @@ def GraphBuilder(path, key, json=False, output_path=None, repo=None):
     
     return g
 
+def translate_to_graph(dataset, key, json=False, output_path=None, repo=None):
+    
+    for d in dataset:
+        if "College" in d and "Department" in d:
+            g.add_node(d[key], strength=len(d["Authors"]), college=d["College"], department=d["Department"])
+        elif "College" in d:
+            g.add_node(d[key], strength=len(d["Authors"]), college=d["College"], department="Not Specified")
+
+        else:
+            g.add_node(d[key], strength=len(d["Authors"]), college="Not Specified", department="Not Specified")          
+
+    combos = itertools.combinations(dataset,2)
+    i = 0
+    for combo in combos:
+        i += 1
+        for item in combo[0]:
+            if item in combo[0] and item in combo[1] and item <> "Program":
+                intersect = set(combo[0][item]).intersection(set(combo[1][item]))
+                if list(intersect) <> []:
+                    g.add_edge(combo[0]["Program"],combo[1]["Program"],{item: list(intersect)})
+
+    for x,y in g.edges():
+        g[x][y]['strength'] = sum(len(v) for v in g[x][y].itervalues())          
+    print str(len(g.edges()))+ " connections out of a possible " + str(i)
+    print len(g.nodes()), "nodes"
+    #for x in g.edges():
+    #   print x,g[x][0]]g[x][1]]
+    
+    if json == True:
+        Write_JSON(g, path, output_path)
+    
+    return g
+
 class SolrData():
     def __init__(self, url):
         self.url = url

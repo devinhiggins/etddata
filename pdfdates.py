@@ -6,7 +6,7 @@ from datetime import datetime, time, date
 from lxml import etree
 from pprint import pprint
 import json
-from . import prereq
+import prereq
 
 class DocumentDates:
     def __init__(self, f):
