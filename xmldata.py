@@ -109,7 +109,7 @@ def MARC_Data(path, item):
 # Takes parameter called data which should be a list of dictionaries.The "Key" parameter is the dictionary key that uniquely specifies
 # each dictionary, and is the basis for comparison.
 
-def GraphBuilder(path, key, json=False, output_path=None, repo=None):
+def GraphBuilder(path, key, json_output=False, output_path=None, repo=None):
 
     g = nx.Graph()
     dataset = XML_Data(path)
@@ -136,12 +136,14 @@ def GraphBuilder(path, key, json=False, output_path=None, repo=None):
     #for x in g.edges():
     #   print x,g[x][0]]g[x][1]]
     
-    if json == True:
+    if json_output == True:
     	Write_JSON(g, path, output_path)
     
     return g
 
-def translate_to_graph(dataset, key, json=False, output_path=None, repo=None):
+def translate_to_graph(dataset, key, json_output=False, output_path=None, repo=None):
+
+    g = nx.Graph()
     
     for d in dataset:
         if "College" in d and "Department" in d:
@@ -169,8 +171,8 @@ def translate_to_graph(dataset, key, json=False, output_path=None, repo=None):
     #for x in g.edges():
     #   print x,g[x][0]]g[x][1]]
     
-    if json == True:
-        Write_JSON(g, path, output_path)
+    if json_output == True:
+        Write_JSON(g, output_path)
     
     return g
 
@@ -248,13 +250,11 @@ def XML_Data(path):
         dict_update(xml_dict, clean_program, data_list)
     return data_list
 
-def Write_JSON(g, path):
-    if output_path is None:
-        output_path=path
-	filename = "etddata.json"
-	with open(os.path.join(output_path,filename), "w") as f:
-		data = json_graph.dumps(g)
-		f.write(data)
+def Write_JSON(g, output_path):
+    filename = "etddata.json"
+    with open(os.path.join(output_path,filename), "w") as f:
+        data = json_graph.dumps(g)
+        f.write(data)
 	print "Wrote file at "+os.path.join(output_path,filename)
            
 #    output = open("/Users/higgi135/Documents/etdDataJSON_3", "wb")
