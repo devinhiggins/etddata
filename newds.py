@@ -245,10 +245,10 @@ def UpdateCustom(server, path, purge=False):
 
             custom_xml = os.path.join(path, xml.replace("DATA", "CUSTOM"))
             
-            with open(custom_xml, "w") as f:
-                f.write(etree.tostring(root, pretty_print=True, encoding='utf-8', xml_declaration=True))
+            #with open(custom_xml, "w") as f:
+            #    f.write(etree.tostring(root, pretty_print=True, encoding='utf-8', xml_declaration=True))
                     
-            xml_object = xmlmap.load_xmlobject_from_file(custom_xml)
+            xml_object = xmlmap.load_xmlobject_from_string(etree.tostring(root, pretty_print=True, encoding='utf-8', xml_declaration=True))
         
             if purge is True:
                 dsx.digital_object.api.purgeDatastream(pid,"CUSTOM")
