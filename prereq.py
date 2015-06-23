@@ -37,3 +37,22 @@ def Get_Pid(xml, repo):
         pid = None
 
     return pid
+
+def find_identifier(server, path, pids):
+    """
+    Iterate through XML files to find source file that matches a given PID.
+
+    Positional arguments:
+    server (str) -- name of server to access, e.g. "fedcomd", "fedcomm", etc.
+    path (str) -- a path containing ETD xml documents.
+    pids (list) -- a list of pids to check for.
+    """
+    repo = RepoConnect(server)
+    xml_files = (x for x in os.listdir(path) if "DATA.xml" in x)
+    for xml in xml_files:
+        returned_pid = Get_Pid(xml, repo)
+        if returned_pid in pids:
+            print "{0} matches {1}".format(xml, returned_pid)
+
+
+
