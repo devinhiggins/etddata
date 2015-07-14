@@ -235,11 +235,10 @@ def UpdateCustom(server, path, purge=False):
     
     xml_files = (x for x in os.listdir(path) if "DATA.xml" in x)
     for xml in xml_files:
-        print xml
         pid = prereq.Get_Pid(xml, repo)
         dsx = DatastreamXml(pid, server=server, repo=repo)
-        dsx.GetObject
         if pid is not None:
+            print "Object found for {0}".format(xml)
             custom_ds = CustomEtd(os.path.join(path, xml), server=server, pid=pid)
             root = custom_ds.CustomDs()
 
