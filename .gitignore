@@ -1,3 +1,4 @@
+.ipynb_checkpoints/
 *.pyc
 default.cfg
 .DS_Store
