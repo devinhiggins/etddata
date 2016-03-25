@@ -1,27 +1,30 @@
-# prereq.py
+"""Set of functions to initiate access to FC repo."""
 
 import os
 import ConfigParser
 from eulfedora.server import Repository
 
-def Get_Configs(server):
+
+def get_configs(server):
     config = ConfigParser.ConfigParser()
     cwd = os.path.dirname(os.path.abspath(__file__))
     config_file = "default.cfg"
-            
+
     config.read(cwd+"/"+config_file)
     username = config.get(server, "username")
     password = config.get(server, "password")
     root = config.get(server, "root")
 
-    return username,password,root
+    return username, password, root
 
-def RepoConnect(server):
-    username,password,root = Get_Configs(server)
-    repo = Repository(root=root,username=username, password=password)
+
+def repo_connect(server):
+    username,password,root = get_configs(server)
+    repo = Repository(root=root, username=username, password=password)
     return repo
 
-def Get_Pid(xml, repo):
+
+def get_pid(xml, repo):
     localID = u'local:\xa0'+xml[:-9]
     pid_check = list(repo.find_objects(identifier=localID))
     if len(pid_check) == 0:
@@ -38,6 +41,16 @@ def Get_Pid(xml, repo):
 
     return pid
 
+def get_pid_by_filename(repo, search_term):
+    """Search repo for objects with filename in identifier field."""
+    pid_check = list(repo.find_objects(identifier=search_term))
+    if len(pid_check) == 0:
+        pid = None
+    elif len(pid_check) >= 1:
+        pid = str(pid_check[0])
+    return pid
+
+
 def find_identifier(server, path, pids):
     """
     Iterate through XML files to find source file that matches a given PID.
@@ -53,6 +66,3 @@ def find_identifier(server, path, pids):
         returned_pid = Get_Pid(xml, repo)
         if returned_pid in pids:
             print "{0} matches {1}".format(xml, returned_pid)
-
-
-
