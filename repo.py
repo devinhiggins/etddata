@@ -1,5 +1,5 @@
 """Set of functions to initiate access to FC repo."""
-
+import logging
 import os
 import ConfigParser
 from eulfedora.server import Repository
@@ -41,15 +41,17 @@ def get_pid(xml, repo):
 
     return pid
 
-def get_pid_by_filename(repo, search_term):
+def get_pid_by_filename(repo, search_term, namespace):
     """Search repo for objects with filename in identifier field."""
     pid_check = list(repo.find_objects(identifier=search_term))
-    if len(pid_check) == 0:
-        pid = None
-    elif len(pid_check) >= 1:
-        pid = str(pid_check[0])
+    logging.info("Found {0} items for {1}".format(len(pid_check), search_term))
+    pid = None
+    for item in pid_check:
+        logging.info("Matching item: {0}".format(item))
+        if str(item).startswith(namespace):
+            pid = str(item)
+            break
     return pid
-
 
 def find_identifier(server, path, pids):
     """
