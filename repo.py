@@ -41,17 +41,24 @@ def get_pid(xml, repo):
 
     return pid
 
-def get_pid_by_filename(repo, search_term, namespace):
+def get_pid_by_filename(repo, search_term, namespace, return_all_objects=False):
     """Search repo for objects with filename in identifier field."""
     pid_check = list(repo.find_objects(identifier=search_term))
     logging.info("Found {0} items for {1}".format(len(pid_check), search_term))
     pid = None
+    pids = []
     for item in pid_check:
         logging.info("Matching item: {0}".format(item))
-        if str(item).startswith(namespace):
-            pid = str(item)
-            break
-    return pid
+        if return_all_objects:
+            pids.append(str(item))
+        else:
+            if str(item).startswith(namespace):
+                pid = str(item)
+                break
+    if return_all_objects:
+        return pids
+    else:
+        return pid
 
 def find_identifier(server, path, pids):
     """
