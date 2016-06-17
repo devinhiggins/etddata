@@ -3,6 +3,7 @@ import logging
 import os
 import ConfigParser
 from eulfedora.server import Repository
+from eulfedora.api import ApiFacade
 
 
 def get_configs(server):
@@ -23,6 +24,10 @@ def repo_connect(server):
     repo = Repository(root=root, username=username, password=password)
     return repo
 
+def api_connect(server):
+    """Connect directly to eulfedora ApiFacade."""
+    username, password, root = get_configs(server)
+    return ApiFacade(root, username=username, password=password)    
 
 def get_pid(xml, repo):
     localID = u'local:\xa0'+xml[:-9]
