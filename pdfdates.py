@@ -6,7 +6,7 @@ from datetime import datetime, time, date
 from lxml import etree
 from pprint import pprint
 import json
-import prereq
+import repo
 
 class DocumentDates:
     def __init__(self, f):
@@ -101,8 +101,8 @@ class ETDData:
 
 
             if filedate > marker and (thirdparty == "N" or thirdparty == "O"):
-                repo = prereq.Repo_Connect(server)
-                pid = prereq.Get_Pid(xfile,repo)
+                repocls = repo.Repo_Connect(server)
+                pid = repo.Get_Pid(xfile,repocls)
                 if pid is not None:
                     pids.append(pid)
 
@@ -112,9 +112,3 @@ class ETDData:
 
         return pids
 
-                                        
-    
-
-        
-
-        

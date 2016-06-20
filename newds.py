@@ -42,12 +42,12 @@ from eulfedora import api
 from msu_programs import College_Sort
 import pdfdates
 import pclean
-import prereq
+import repo
 
 class CustomEtd():
     def __init__(self, data_xml, repo=None, server="Development", pid=None):
         if not repo:
-            repo = prereq.RepoConnect(server)
+            repo = repo.RepoConnect(server)
         self.data_xml = data_xml
         self.tree = etree.parse(self.data_xml)
         self.marc_tree = None
@@ -227,10 +227,10 @@ class CustomEtd():
 
 
 class DatastreamXml():
-    def __init__(self, pid, repo=None, server="Development"):
-        self.repo = repo
+    def __init__(self, pid, repocls=None, server="Development"):
+        self.repo = repocls
         if not repo:
-            username,password,root = prereq.Get_Configs(server)
+            username,password,root = repo.Get_Configs(server)
             self.repo = Repository(root=root,username=username, password=password)
         self.pid = pid
         self.GetObject()
@@ -262,12 +262,12 @@ def UpdateCustom(server, path, purge=False):
     Function to update custom xml datastream for all existing objects.
     """
     i = 0
-    username,password,root = prereq.Get_Configs(server)
+    username,password,root = repo.Get_Configs(server)
     repo = Repository(root=root,username=username, password=password)
     
     xml_files = (x for x in os.listdir(path) if "DATA.xml" in x)
     for xml in xml_files:
-        pid = prereq.Get_Pid(xml, repo)
+        pid = repo.Get_Pid(xml, repo)
         dsx = DatastreamXml(pid, server=server, repo=repo)
         if pid is not None:
             print "Object found for {0}".format(xml)
@@ -296,14 +296,14 @@ def Update_Custom(server, path, purge=False):
     Function to update custom xml datastream for all existing objects.
     """
     i = 0
-    username,password,root = prereq.Get_Configs(server)
+    username,password,root = repo.Get_Configs(server)
     repo = Repository(root=root,username=username, password=password)
     
     xml_files = (x for x in os.listdir(path) if "DATA.xml" in x)
 
     for xml in xml_files:
 
-        pid = prereq.Get_Pid(xml, repo)
+        pid = repo.Get_Pid(xml, repo)
 
         if pid is not None:
   
