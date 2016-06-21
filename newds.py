@@ -42,7 +42,7 @@ from eulfedora import api
 from msu_programs import College_Sort
 import pdfdates
 import pclean
-import prereq
+import repo
 
 class CustomEtd():
     def __init__(self, data_xml, repo=None, server="Development", pid=None):
