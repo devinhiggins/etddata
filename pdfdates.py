@@ -6,7 +6,7 @@ from datetime import datetime, time, date
 from lxml import etree
 from pprint import pprint
 import json
-import repo
+from msulrepo import repo
 
 class DocumentDates:
     def __init__(self, f):
